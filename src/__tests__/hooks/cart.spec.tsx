@@ -62,12 +62,14 @@ const TestComponent: React.FC = () => {
         Decrement
       </TouchableOpacity>
 
-      {products.map(product => (
-        <View key={product.id}>
-          <Text>{product.title}</Text>
-          <Text>{product.quantity}</Text>
-        </View>
-      ))}
+      {products.map(product => {
+        return (
+          <View key={product.id}>
+            <Text>{product.title}</Text>
+            <Text>{product.quantity}</Text>
+          </View>
+        );
+      })}
     </>
   );
 };

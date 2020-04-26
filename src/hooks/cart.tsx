@@ -18,7 +18,7 @@ interface Product {
 
 interface CartContext {
   products: Product[];
-  addToCart(item: Omit<Product, 'quantity'>): void;
+  addToCart(item: Product): void;
   increment(id: string): void;
   decrement(id: string): void;
 }
@@ -42,69 +42,58 @@ const CartProvider: React.FC = ({ children }) => {
   }, []);
 
   const addToCart = useCallback(
-    async (product: Omit<Product, 'quantity'>) => {
-      const productsUpdated = [...products];
+    async (product: Product) => {
       const findProduct = products.find(item => {
         return item.id === product.id;
       });
       if (findProduct) {
         findProduct.quantity += 1;
       } else {
-        const newProductOnCard = {
+        const newProductOnCart = {
           id: product.id,
           title: product.title,
           image_url: product.image_url,
           price: product.price,
           quantity: 1,
         };
-        productsUpdated.push(newProductOnCard);
+        products.push(newProductOnCart);
       }
-      await AsyncStorage.setItem(
-        '@GoMarketplace:products',
-        JSON.stringify(productsUpdated),
-      );
-      setProducts(productsUpdated);
+      AsyncStorage.setItem('@GoMarketplace:products', JSON.stringify(products));
+      setProducts([...products]);
     },
     [products],
   );
 
   const increment = useCallback(
     async id => {
-      const productsUpdated = [...products];
-      const findProduct = productsUpdated.find(item => {
+      const findProduct = products.find(item => {
         return item.id === id;
       });
       if (findProduct) {
         findProduct.quantity += 1;
-        await AsyncStorage.setItem(
-          '@GoMarketplace:products',
-          JSON.stringify(productsUpdated),
-        );
-        setProducts(productsUpdated);
       }
+      AsyncStorage.setItem('@GoMarketplace:products', JSON.stringify(products));
+      setProducts([...products]);
     },
     [products],
   );
 
   const decrement = useCallback(
     async id => {
-      const productsUpdated = [...products];
       const findProduct = products.find(item => {
         return item.id === id;
       });
       if (findProduct) {
         findProduct.quantity -= 1;
-        if (findProduct.quantity > 0) {
-          await AsyncStorage.setItem(
-            'products',
-            JSON.stringify(productsUpdated),
+        if (findProduct.quantity <= 0) {
+          products.splice(
+            products.findIndex(item => item.id === id),
+            1,
           );
-          setProducts(productsUpdated);
-        } else {
-          const productsAfterRemotion = products.filter(item => item.id !== id);
-          setProducts(productsAfterRemotion);
         }
+        setProducts([...products]);
       }
+      AsyncStorage.setItem('products', JSON.stringify(products));
     },
     [products],
   );
