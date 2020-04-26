@@ -18,7 +18,7 @@ interface Product {
 
 interface CartContext {
   products: Product[];
-  addToCart(item: Product): void;
+  addToCart(item: Omit<Product, 'quantity'>): void;
   increment(id: string): void;
   decrement(id: string): void;
 }
@@ -30,23 +30,84 @@ const CartProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
+      const productsAsyncStorage = await AsyncStorage.getItem(
+        '@GoMarketplace:products',
+      );
+      if (productsAsyncStorage) {
+        setProducts(JSON.parse(productsAsyncStorage));
+      }
     }
-
+    // AsyncStorage.removeItem('products');
     loadProducts();
   }, []);
 
-  const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
-  }, []);
+  const addToCart = useCallback(
+    async (product: Omit<Product, 'quantity'>) => {
+      const productsUpdated = [...products];
+      const findProduct = products.find(item => {
+        return item.id === product.id;
+      });
+      if (findProduct) {
+        findProduct.quantity += 1;
+      } else {
+        const newProductOnCard = {
+          id: product.id,
+          title: product.title,
+          image_url: product.image_url,
+          price: product.price,
+          quantity: 1,
+        };
+        productsUpdated.push(newProductOnCard);
+      }
+      await AsyncStorage.setItem(
+        '@GoMarketplace:products',
+        JSON.stringify(productsUpdated),
+      );
+      setProducts(productsUpdated);
+    },
+    [products],
+  );
 
-  const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+  const increment = useCallback(
+    async id => {
+      const productsUpdated = [...products];
+      const findProduct = productsUpdated.find(item => {
+        return item.id === id;
+      });
+      if (findProduct) {
+        findProduct.quantity += 1;
+        await AsyncStorage.setItem(
+          '@GoMarketplace:products',
+          JSON.stringify(productsUpdated),
+        );
+        setProducts(productsUpdated);
+      }
+    },
+    [products],
+  );
 
-  const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+  const decrement = useCallback(
+    async id => {
+      const productsUpdated = [...products];
+      const findProduct = products.find(item => {
+        return item.id === id;
+      });
+      if (findProduct) {
+        findProduct.quantity -= 1;
+        if (findProduct.quantity > 0) {
+          await AsyncStorage.setItem(
+            'products',
+            JSON.stringify(productsUpdated),
+          );
+          setProducts(productsUpdated);
+        } else {
+          const productsAfterRemotion = products.filter(item => item.id !== id);
+          setProducts(productsAfterRemotion);
+        }
+      }
+    },
+    [products],
+  );
 
   const value = React.useMemo(
     () => ({ addToCart, increment, decrement, products }),
