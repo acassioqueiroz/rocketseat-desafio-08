@@ -1,5 +1,4 @@
 /* eslint-disable import/first */
-
 import React from 'react';
 import { mocked } from 'ts-jest/utils';
 import { View, Text, TouchableOpacity } from 'react-native';
